@@ -19,12 +19,15 @@ library
                      , Db
                      , DbClient
                      , Config
+                     , Features
                      , Logger
                      , Schema
+                     , Psegmentize
                      , Types
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , bytestring
+                     , containers
                      , esqueleto
                      , fast-logger
                      , katip

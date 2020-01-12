@@ -72,6 +72,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
                        labial Text Maybe
                        round Text Maybe
                        labiodental Text Maybe
+                       coronal Text Maybe
                        anterior Text Maybe
                        distributed Text Maybe
                        strident Text Maybe

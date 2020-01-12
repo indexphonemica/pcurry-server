@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module DbClient where
+module DbClient (getDoculectInfo) where
 
 import           Control.Monad.Reader      (MonadIO, lift)
 import           Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)

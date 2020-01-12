@@ -1,6 +1,10 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Types where
 
-import           Data.Text (Text)
+import           Data.Aeson
+import           Data.Text    (Text)
+import           GHC.Generics
 import           Schema
 
 type Realization = Text
@@ -10,3 +14,14 @@ type AllophoneInfo =
   (Bool, Text, Text, Maybe Phoneme, Maybe Realization, Segment)
 type DoculectInfo =
   (Doculect, Language, [SegmentInfo], [AllophoneInfo])
+
+data InventorySegment = InventorySegment
+  { segment  :: Text
+  , marginal :: Bool
+  , loan     :: Bool
+  }
+  deriving (Eq, Show, Generic)
+
+instance ToJSON InventorySegment
+
+type PhonemeMatrix = [[InventorySegment]]
