@@ -34,6 +34,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
                        sourceYear Text Maybe
                        sourcePages Text Maybe
                        deriving Show Eq
+                       UniqueIID inventoryId
 
                    Language json sql=languages
                        name Text Maybe
@@ -44,6 +45,7 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
                        macroarea Text Maybe
                        latitude Text Maybe
                        longitude Text Maybe
+                       UniqueGlottocode glottocode
 
                    Country json sql=countries
                        Id Text maxlen=255

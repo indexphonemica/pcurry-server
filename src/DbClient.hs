@@ -1,24 +1,17 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module DbClient where
 
-import           Config
-import           Control.Monad.Reader (MonadIO, MonadReader, liftIO)
-import           Data.Text            (Text)
+import           Control.Monad.Reader      (MonadIO, lift)
+import           Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
+import           Data.Text                 (Text)
 import           Database.Esqueleto
-import           Db
 import           Schema
+import           Types
 
-type Realization = Text
-type Phoneme = Text
-
-doculectQuery :: MonadIO m => Text -> SqlPersistT m [Entity Doculect]
-doculectQuery iid = select $
-  from $ \doculects -> do
-  where_ (doculects ^. DoculectInventoryId ==. val iid)
-  return doculects
+doculectQuery :: MonadIO m => Text -> SqlPersistT m (Maybe (Entity Doculect))
+doculectQuery iid = getBy $ UniqueIID iid
 
 doculectSegmentsQuery :: MonadIO m =>
   Entity Doculect ->
@@ -32,12 +25,9 @@ doculectSegmentsQuery doc = select $
 
 doculectLanguageQuery :: MonadIO m =>
   Entity Doculect ->
-  SqlPersistT m [(Entity Doculect, Entity Language)]
-doculectLanguageQuery doc = select $
-  from $ \(doculects `InnerJoin` languages) -> do
-  on (doculects ^. DoculectGlottocode ==. languages ^. LanguageGlottocode)
-  where_ (doculects ^. DoculectId ==. val (entityKey doc))
-  return (doculects, languages)
+  SqlPersistT m (Maybe (Entity Language))
+doculectLanguageQuery doc =
+  getBy $ UniqueGlottocode $ doculectGlottocode . entityVal $ doc
 
 doculectAllophoneQuery :: MonadIO m =>
   Entity Doculect ->
@@ -59,10 +49,29 @@ doculectAllophoneQuery doc = select $
          , r ^. SegmentPhoneme
          , p)
 
-doculect :: (MonadIO m, MonadReader Config m) =>
-  Text -> m (Maybe Doculect)
-doculect iid = do
-  candidates <- runDb $ doculectQuery iid
-  case candidates of
-    []  -> return Nothing
-    e:_ -> return $ Just $ entityVal e
+doculectInfoQuery :: MonadIO m =>
+  Text -> SqlPersistT m
+  (Maybe
+    (Entity Doculect, Entity Language,
+      [(Entity Segment, Value Int, Value Bool)],
+      [(Value Bool, Value Text, Value Text, Value (Maybe Phoneme),
+         Value (Maybe Realization), Entity Segment)]))
+doculectInfoQuery iid = runMaybeT $ do
+  doc <- MaybeT $ doculectQuery iid
+  lang <- MaybeT $ doculectLanguageQuery doc
+  segments <- lift $ doculectSegmentsQuery doc
+  allophones <- lift $ doculectAllophoneQuery doc
+  return (doc, lang, segments, allophones)
+
+getDoculectInfo :: MonadIO m => Text -> SqlPersistT m (Maybe DoculectInfo)
+getDoculectInfo iid =
+  do
+    rawDoculectInfo <- doculectInfoQuery iid
+    return $ fmap unSql rawDoculectInfo
+  where
+    unSql (ed, el, sis, ais) =
+      (entityVal ed, entityVal el, map sInfoFromSql sis, map aInfoFromSql ais)
+    sInfoFromSql (es, vi, vb) = (entityVal es, unValue vi, unValue vb)
+    aInfoFromSql (vb, vt, vt', vmp, vmr, es) =
+      (unValue vb, unValue vt, unValue vt',
+       unValue vmp, unValue vmr, entityVal es)
