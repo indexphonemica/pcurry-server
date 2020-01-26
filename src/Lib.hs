@@ -17,8 +17,8 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Int                    (Int64)
 import qualified Data.Pool                   as Pool
-import           Database.Persist.Postgresql (Entity, fromSqlKey, insert,
-                                              selectList)
+import           Database.Persist.Postgresql (Entity, Filter, fromSqlKey, insert,
+                                              selectList, entityVal)
 import qualified Katip
 import           Network.Wai
 import           Network.Wai.Handler.Warp
@@ -32,7 +32,7 @@ import           Db                          (initDb, runDb)
 import           Logger
 import           Schema                      (User)
 
-type API = "users" :> Get '[JSON] [Entity User]
+type API = "users" :> Get '[JSON] [User]
   :<|> "users" :> ReqBody '[JSON] User :> Post '[JSON] Int64
 
 appToServer :: Config -> Server API
@@ -102,8 +102,10 @@ api = Proxy
 server :: MonadIO m => ServerT API (AppT m)
 server = users :<|> createUser
 
-users :: MonadIO m => AppT m [Entity User]
-users = runDb $ selectList [] []
+users :: MonadIO m => AppT m [User]
+users = do
+  entities <- runDb $ selectList ([] :: [Filter User]) []
+  return $ map entityVal entities
 
 createUser :: MonadIO m => User -> AppT m Int64
 createUser usr = do

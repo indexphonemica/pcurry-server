@@ -17,7 +17,7 @@ returning the relevant information directly are exported in order to save the
 user the headache of writing an enormous case statement themselves.
 -}
 
-module Features.Consonants
+module Features.Place
 where
 
 import           Data.Text (Text)
@@ -43,17 +43,21 @@ data CorePOA = Labial
              | Pharyngeal
              | Epiglottal
              | Glottal
+             | Unknown
              deriving (Eq, Ord, Show)
 
 data LabialState = Compressed | Rounded
+  deriving (Eq, Ord, Show)
 
 data DorsalState = Palatalized | Velarized
+  deriving (Eq, Ord, Show)
 
 data POA = POA { corePOA     :: CorePOA
                , labialState :: Maybe LabialState
                , dorsalState :: Maybe DorsalState
                , retroflexed :: Bool
                }
+  deriving (Eq, Ord, Show)
 
 isLabial = allp [ isPositive segmentLabial
                 , isNegative segmentRound
@@ -78,6 +82,30 @@ isRoundedLabial = allp [ isPositive segmentLabial
                        , isNegative segmentDorsal
                        , isNegative segmentEpilaryngealSource
                        ]
+
+isRhotacizedLabial = allp [ isPositive segmentLabial
+                          , isNegative segmentRound
+                          , isPositive segmentCoronal
+                          , isPositive segmentAnterior
+                          , isPositive segmentDistributed
+                          , isPositive segmentDorsal
+                          ]
+
+isLabiodental = allp [ isNegative segmentRound
+                     , isPositive segmentLabiodental
+                     , isNegative segmentDorsal
+                     ]
+
+isPalatalizedLabiodental = allp [ isNegative segmentRound
+                                , isPositive segmentLabiodental
+                                , isPositive segmentDorsal
+                                , isPositive segmentFront
+                                , isNegative segmentBack
+                                ]
+
+isRoundedLabiodental = allp [ isPositive segmentRound
+                            , isPositive segmentLabiodental
+                            ]
 
 isLinguolabial = allp [ isPositive segmentLabial
                       , isNull segmentRound
@@ -363,13 +391,84 @@ isPharyngeal = allp [ isNegative segmentLabial
                     , isPositive segmentLow
                     ]
 
+isRoundedPharyngeal = allp [ isPositive segmentLabial
+                           , isPositive segmentRound
+                           , isPositive segmentDorsal
+                           , isNegative segmentHigh
+                           , isPositive segmentLow
+                           ]
+
 isEpiglottal = allp [ isNegative segmentLabial
                     , isPositive segmentEpilaryngealSource
                     ]
+
+isRoundedEpiglottal = allp [ isPositive segmentLabial
+                           , isPositive segmentRound
+                           , isPositive segmentEpilaryngealSource
+                           ]
 
 isGlottal = const False
 
 getPOA :: Segment -> POA
 getPOA seg = case seg of
-  s | isLabial s -> POA Labial Nothing Nothing
-    | isLabiodental s -> POA Labiodental Nothing Nothing
+  -- Labials
+  s | isLabial s -> POA Labial Nothing Nothing False
+    | isRoundedLabial s -> POA Labial (Just Rounded) Nothing False
+    | isPalatalizedLabial s -> POA Labial Nothing (Just Palatalized) False
+    | isRhotacizedLabial s -> POA Labial Nothing Nothing True
+  -- Labiodentals
+    | isLabiodental s -> POA Labiodental Nothing Nothing False
+    | isPalatalizedLabiodental s -> POA Labiodental Nothing (Just Palatalized) False
+    | isRoundedLabiodental s -> POA Labiodental (Just Rounded) Nothing False
+  -- Linguolabials
+    | isLinguolabial s -> POA Linguolabial Nothing Nothing False
+  -- Dentals
+    | isDental s -> POA Dental Nothing Nothing False
+    | isRoundedDental s -> POA Dental (Just Rounded) Nothing False
+    | isVelarizedDental s -> POA Dental Nothing (Just Velarized) False
+  -- Alveolars
+    | isAlveolar s -> POA Alveolar Nothing Nothing False
+    | isRoundedAlveolar s -> POA Alveolar (Just Rounded) Nothing False
+    | isPalatalizedAlveolar s -> POA Alveolar Nothing (Just Palatalized) False
+    | isRoundedPalatalizedAlveolar s -> POA Alveolar (Just Rounded) (Just Palatalized) False
+    | isVelarizedAlveolar s -> POA Alveolar Nothing (Just Velarized) False
+  -- Retroflexes
+    | isRetroflex s -> POA Retroflex Nothing Nothing False
+    | isRoundedRetroflex s -> POA Retroflex (Just Rounded) Nothing False
+    | isPalatalizedRetroflex s -> POA Retroflex Nothing (Just Palatalized) False
+  -- Alveolopalatals
+    | isAlveolopalatal s -> POA Alveolopalatal Nothing Nothing False
+    | isRoundedAlveolopalatal s -> POA Alveolopalatal (Just Rounded) Nothing False
+    | isPalatalizedAlveolopalatal s -> POA Alveolopalatal Nothing (Just Palatalized) False
+    | isVelarizedAlveolopalatal s -> POA Alveolopalatal Nothing (Just Velarized) False
+    | isCompressedAlveolopalatal s -> POA Alveolopalatal (Just Compressed) Nothing False
+  -- Palatoalveolars
+    | isPalatoalveolar s -> POA Palatoalveolar Nothing Nothing False
+    | isRoundedPalatoalveolar s -> POA Palatoalveolar (Just Rounded) Nothing False
+    | isRoundedPalatalizedPalatoalveolar s -> POA Palatoalveolar (Just Rounded) (Just Palatalized) False
+  -- Palatals
+    | isPalatal s -> POA Palatal Nothing Nothing False
+    | isRoundedPalatal s -> POA Palatal (Just Rounded) Nothing False
+  -- Sje
+    | isSje s -> POA Sje Nothing Nothing False
+  -- Velars
+    | isVelar s -> POA Velar Nothing Nothing False
+    | isRoundedVelar s -> POA Velar (Just Rounded) Nothing False
+  -- Labial-Alveolars and Labial-Velars
+    | isLabialAlveolar s -> POA LabialAlveolar Nothing Nothing False
+    | isLabialVelar s -> POA LabialVelar Nothing Nothing False
+    | isRoundedLabialVelar s -> POA LabialVelar (Just Rounded) Nothing False
+    | isPalatalizedLabialVelar s -> POA LabialVelar Nothing (Just Palatalized) False
+  -- Uvulars
+    | isUvular s -> POA Uvular Nothing Nothing False
+    | isRoundedUvular s -> POA Uvular (Just Rounded) Nothing False
+    | isPalatalizedUvular s -> POA Uvular Nothing (Just Palatalized) False
+  -- Pharyngeals
+    | isPharyngeal s -> POA Pharyngeal Nothing Nothing False
+    | isRoundedPharyngeal s -> POA Pharyngeal (Just Rounded) Nothing False
+  -- Epiglottals
+    | isEpiglottal s -> POA Epiglottal Nothing Nothing False
+    | isRoundedEpiglottal s -> POA Epiglottal (Just Rounded) Nothing False
+  -- Glottals
+    | isGlottal s -> POA Glottal Nothing Nothing False
+  _ -> POA Unknown Nothing Nothing False

@@ -24,12 +24,16 @@ import           Network.Wai                 (Application)
 import qualified Data.Text                   as T
 import           Db
 import           Logger                      (defaultLogEnv)
+import           Schema
+import qualified TestFeatures
 
 main :: IO ()
-main = bracket
-  setup
-  (\(cfg, _) -> teardown cfg)
-  (\(_, app) -> hspec $ spec app)
+main = do
+  bracket
+    webSetup
+    (\(cfg, _) -> teardown cfg)
+    (\(_, app) -> hspec $ webSpec app)
+  hspec TestFeatures.spec
 
 -- runAppToIO :: Config -> App a -> IO a
 -- runAppToIO config app = do
@@ -38,8 +42,8 @@ main = bracket
 --         Left err -> throwIO err
 --         Right a  -> return a
 
-setup :: IO (Config, Application)
-setup = do
+webSetup :: IO (Config, Application)
+webSetup = do
     env <- defaultLogEnv
     pool <- makePool Test env
     let cfg = Config { configPool = pool
@@ -65,8 +69,8 @@ teardown cfg = do
     deleteAllUsers pool =
         flip runSqlPool pool $ deleteWhere ([] :: [Filter User])
 
-spec :: Application -> Spec
-spec app =
+webSpec :: Application -> Spec
+webSpec app =
      beforeAll (pure app) $
         describe "/users" $ do
 
