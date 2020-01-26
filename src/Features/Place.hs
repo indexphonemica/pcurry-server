@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 {-|
-Module      : Features
+Module      : Features.Place
 Description : Contains functions to generate sensible features from Phoible's
 Copyright   : (c) HallowXIII 2019
 License     : MIT
@@ -20,7 +20,7 @@ user the headache of writing an enormous case statement themselves.
 module Features.Place
 where
 
-import           Data.Text (Text)
+import           Data.Text  (Text)
 import           Features
 import           Schema
 
@@ -31,7 +31,6 @@ data CorePOA = Labial
              | Linguolabial
              | Dental
              | Alveolar
-             | Retroflex
              | Alveolopalatal
              | Palatoalveolar
              | Palatal
@@ -59,416 +58,434 @@ data POA = POA { corePOA     :: CorePOA
                }
   deriving (Eq, Ord, Show)
 
-isLabial = allp [ isPositive segmentLabial
-                , isNegative segmentRound
-                , isNegative segmentLabiodental
-                , isNegative segmentCoronal
-                , isNegative segmentDorsal
+isLabial = allp [ isVal "+" segmentLabial
+                , isVal "-" segmentRound
+                , isVal "-" segmentLabiodental
+                , isVal "-" segmentCoronal
+                , isVal "-" segmentDorsal
                 ]
 
-isPalatalizedLabial = allp [ isPositive segmentLabial
-                           , isNegative segmentRound
-                           , isNegative segmentLabiodental
-                           , isNegative segmentCoronal
-                           , isPositive segmentDorsal
-                           , isPositive segmentFront
-                           , isNegative segmentBack
+isPalatalizedLabial = allp [ isVal "+" segmentLabial
+                           , isVal "-" segmentRound
+                           , isVal "-" segmentLabiodental
+                           , isVal "-" segmentCoronal
+                           , isVal "+" segmentDorsal
+                           , isVal "+" segmentFront
+                           , isVal "-" segmentBack
                            ]
 
-isRoundedLabial = allp [ isPositive segmentLabial
-                       , isPositive segmentRound
-                       , isNegative segmentLabiodental
-                       , isNegative segmentCoronal
-                       , isNegative segmentDorsal
-                       , isNegative segmentEpilaryngealSource
+isRoundedLabial = allp [ isVal "+" segmentLabial
+                       , isVal "+" segmentRound
+                       , isVal "-" segmentLabiodental
+                       , isVal "-" segmentCoronal
+                       , isVal "-" segmentDorsal
+                       , isVal "-" segmentEpilaryngealSource
                        ]
 
-isRhotacizedLabial = allp [ isPositive segmentLabial
-                          , isNegative segmentRound
-                          , isPositive segmentCoronal
-                          , isPositive segmentAnterior
-                          , isPositive segmentDistributed
-                          , isPositive segmentDorsal
+isRhotacizedLabial = allp [ isVal "+" segmentLabial
+                          , isVal "-" segmentRound
+                          , isVal "+" segmentCoronal
+                          , isVal "+" segmentAnterior
+                          , isVal "+" segmentDistributed
+                          , isVal "+" segmentDorsal
                           ]
 
-isLabiodental = allp [ isNegative segmentRound
-                     , isPositive segmentLabiodental
-                     , isNegative segmentDorsal
+isLabiodental = allp [ isVal "-" segmentRound
+                     , isVal "+" segmentLabiodental
+                     , isVal "-" segmentDorsal
                      ]
 
-isPalatalizedLabiodental = allp [ isNegative segmentRound
-                                , isPositive segmentLabiodental
-                                , isPositive segmentDorsal
-                                , isPositive segmentFront
-                                , isNegative segmentBack
+isPalatalizedLabiodental = allp [ isVal "-" segmentRound
+                                , isVal "+" segmentLabiodental
+                                , isVal "+" segmentDorsal
+                                , isVal "+" segmentFront
+                                , isVal "-" segmentBack
                                 ]
 
-isRoundedLabiodental = allp [ isPositive segmentRound
-                            , isPositive segmentLabiodental
+isRoundedLabiodental = allp [ isVal "+" segmentRound
+                            , isVal "+" segmentLabiodental
                             ]
 
-isLinguolabial = allp [ isPositive segmentLabial
+isLinguolabial = allp [ isVal "+" segmentLabial
                       , isNull segmentRound
                       , isNull segmentLabiodental
-                      , isPositive segmentCoronal
-                      , isPositive segmentAnterior
-                      , isNegative segmentDorsal
+                      , isVal "+" segmentCoronal
+                      , isVal "+" segmentAnterior
+                      , isVal "-" segmentDorsal
                       ]
 
-isDental = allp [ isNegative segmentLabial
-                , isPositive segmentCoronal
-                , isPositive segmentAnterior
-                , isPositive segmentDistributed
-                , isNegative segmentDorsal
+isDental = allp [ isVal "-" segmentLabial
+                , isVal "+" segmentCoronal
+                , isVal "+" segmentAnterior
+                , isVal "+" segmentDistributed
+                , isVal "-" segmentDorsal
                 ]
 
-isRoundedDental = allp [ isPositive segmentLabial
-                       , isPositive segmentRound
-                       , isPositive segmentCoronal
-                       , isPositive segmentAnterior
-                       , isPositive segmentDistributed
-                       , isNegative segmentDorsal
+isRoundedDental = allp [ isVal "+" segmentLabial
+                       , isVal "+" segmentRound
+                       , isVal "+" segmentCoronal
+                       , isVal "+" segmentAnterior
+                       , isVal "+" segmentDistributed
+                       , isVal "-" segmentDorsal
                        ]
 
-isVelarizedDental = allp [ isNegative segmentLabial
-                         , isPositive segmentCoronal
-                         , isPositive segmentAnterior
-                         , isPositive segmentDistributed
-                         , isPositive segmentDorsal
-                         , isNegative segmentFront
-                         , isNegative segmentBack
+isVelarizedDental = allp [ isVal "-" segmentLabial
+                         , isVal "+" segmentCoronal
+                         , isVal "+" segmentAnterior
+                         , isVal "+" segmentDistributed
+                         , isVal "+" segmentDorsal
+                         , isVal "-" segmentFront
+                         , isVal "-" segmentBack
                          ]
 
-isAlveolar = allp [ isNegative segmentLabial
-                  , isPositive segmentCoronal
-                  , isPositive segmentAnterior
-                  , isNegative segmentDistributed
+isAlveolar = allp [ isVal "-" segmentLabial
+                  , isVal "+" segmentCoronal
+                  , isVal "+" segmentAnterior
+                  , isVal "-" segmentDistributed
                     ||| isNull segmentDistributed
-                  , isNegative segmentDorsal
+                  , isVal "-" segmentDorsal
                   ]
 
-isRoundedAlveolar = allp [ isPositive segmentRound
-                         , isPositive segmentCoronal
-                         , isPositive segmentAnterior
-                         , isNegative segmentDorsal
+isRoundedAlveolar = allp [ isVal "+" segmentRound
+                         , isVal "+" segmentCoronal
+                         , isVal "+" segmentAnterior
+                         , isVal "-" segmentDorsal
                          ]
 
-isPalatalizedAlveolar = allp [ isNegative segmentLabial
-                             , isPositive segmentCoronal
-                             , isPositive segmentAnterior
-                             , isNegative segmentDistributed
-                             , isPositive segmentDorsal
-                             , isPositive segmentFront
-                             , isNegative segmentBack
+isPalatalizedAlveolar = allp [ isVal "-" segmentLabial
+                             , isVal "+" segmentCoronal
+                             , isVal "+" segmentAnterior
+                             , isVal "-" segmentDistributed
+                             , isVal "+" segmentDorsal
+                             , isVal "+" segmentFront
+                             , isVal "-" segmentBack
                              ]
 
-isRoundedPalatalizedAlveolar = allp [ isPositive segmentLabial
-                                    , isPositive segmentRound
-                                    , isPositive segmentCoronal
-                                    , isPositive segmentAnterior
-                                    , isNegative segmentDistributed
-                                    , isPositive segmentDorsal
-                                    , isPositive segmentFront
-                                    , isNegative segmentBack
+isRoundedPalatalizedAlveolar = allp [ isVal "+" segmentLabial
+                                    , isVal "+" segmentRound
+                                    , isVal "+" segmentCoronal
+                                    , isVal "+" segmentAnterior
+                                    , isVal "-" segmentDistributed
+                                    , isVal "+" segmentDorsal
+                                    , isVal "+" segmentFront
+                                    , isVal "-" segmentBack
                                     ]
 
-isVelarizedAlveolar = allp [ isNegative segmentLabial
-                           , isPositive segmentCoronal
-                           , isPositive segmentAnterior
-                           , isNegative segmentDistributed
-                           , isPositive segmentDorsal
-                           , isNegative segmentFront
-                           , isNegative segmentBack
+isVelarizedAlveolar = allp [ isVal "-" segmentLabial
+                           , isVal "+" segmentCoronal
+                           , isVal "+" segmentAnterior
+                           , isVal "-" segmentDistributed
+                           , isVal "+" segmentDorsal
+                           , isVal "-" segmentFront
+                           , isVal "-" segmentBack
                            ]
 
-isRetroflex = allp [ isNegative segmentLabial
-                   , isPositive segmentCoronal
-                   , isNegative segmentAnterior
+isRetroflex = allp [ isVal "-" segmentLabial
+                   , isVal "+" segmentCoronal
+                   , isVal "-" segmentAnterior
                      ||| isNull segmentAnterior
-                   , isNegative segmentDorsal
-                   , isNegative segmentDistributed
+                   , isVal "-" segmentDorsal
+                   , isVal "-" segmentDistributed
                    ]
 
-isRoundedRetroflex = allp [ isPositive segmentLabial
-                          , isPositive segmentRound
-                          , isPositive segmentCoronal
-                          , isNegative segmentAnterior
+isRoundedRetroflex = allp [ isVal "+" segmentLabial
+                          , isVal "+" segmentRound
+                          , isVal "+" segmentCoronal
+                          , isVal "-" segmentAnterior
                             ||| isNull segmentAnterior
-                          , isNegative segmentDorsal
-                          , isNegative segmentDistributed
+                          , isVal "-" segmentDorsal
+                          , isVal "-" segmentDistributed
                           ]
 
-isPalatalizedRetroflex = allp [ isNegative segmentLabial
-                              , isPositive segmentCoronal
-                              , isNegative segmentAnterior
-                              , isNegative segmentDistributed
-                              , isPositive segmentDorsal
-                              , isPositive segmentFront
-                              , isNegative segmentBack
+isPalatalizedRetroflex = allp [ isVal "-" segmentLabial
+                              , isVal "+" segmentCoronal
+                              , isVal "-" segmentAnterior
+                              , isVal "-" segmentDistributed
+                              , isVal "+" segmentDorsal
+                              , isVal "+" segmentFront
+                              , isVal "-" segmentBack
                               ]
 
-isAlveolopalatal = allp [ isNegative segmentLabial
-                        , isPositive segmentCoronal
-                        , isNegative segmentAnterior
-                        , isPositive segmentDistributed
-                        , isNegative segmentDorsal
+isAlveolopalatal = allp [ isVal "-" segmentLabial
+                        , isVal "+" segmentCoronal
+                        , isVal "-" segmentAnterior
+                        , isVal "+" segmentDistributed
+                        , isVal "-" segmentDorsal
                         ]
 
-isRoundedAlveolopalatal = allp [ isPositive segmentLabial
-                               , isPositive segmentRound
-                               , isPositive segmentCoronal
-                               , isNegative segmentAnterior
-                               , isPositive segmentDistributed
-                               , isNegative segmentDorsal
+isRoundedAlveolopalatal = allp [ isVal "+" segmentLabial
+                               , isVal "+" segmentRound
+                               , isVal "+" segmentCoronal
+                               , isVal "-" segmentAnterior
+                               , isVal "+" segmentDistributed
+                               , isVal "-" segmentDorsal
                                ]
 
-isPalatalizedAlveolopalatal = allp [ isNegative segmentLabial
-                                   , isPositive segmentCoronal
-                                   , isNegative segmentAnterior
-                                   , isPositive segmentDistributed
-                                   , isPositive segmentDorsal
-                                   , isPositive segmentFront
-                                   , isNegative segmentBack
-                                   , isPositive segmentStrident
+isPalatalizedAlveolopalatal = allp [ isVal "-" segmentLabial
+                                   , isVal "+" segmentCoronal
+                                   , isVal "-" segmentAnterior
+                                   , isVal "+" segmentDistributed
+                                   , isVal "+" segmentDorsal
+                                   , isVal "+" segmentFront
+                                   , isVal "-" segmentBack
+                                   , isVal "+" segmentStrident
                                    ]
 
 
-isVelarizedAlveolopalatal = allp [ isNegative segmentLabial
-                                 , isPositive segmentCoronal
-                                 , isNegative segmentAnterior
-                                 , isPositive segmentDistributed
-                                 , isPositive segmentDorsal
-                                 , isNegative segmentFront
-                                 , isNegative segmentBack
+isVelarizedAlveolopalatal = allp [ isVal "-" segmentLabial
+                                 , isVal "+" segmentCoronal
+                                 , isVal "-" segmentAnterior
+                                 , isVal "+" segmentDistributed
+                                 , isVal "+" segmentDorsal
+                                 , isVal "-" segmentFront
+                                 , isVal "-" segmentBack
                                  ]
 
-isCompressedAlveolopalatal = allp [ isPositive segmentLabial
-                                  , isNegative segmentRound
-                                  , isPositive segmentCoronal
-                                  , isNegative segmentAnterior
-                                  , isPositive segmentDistributed
-                                  , isNegative segmentDorsal
+isCompressedAlveolopalatal = allp [ isVal "+" segmentLabial
+                                  , isVal "-" segmentRound
+                                  , isVal "+" segmentCoronal
+                                  , isVal "-" segmentAnterior
+                                  , isVal "+" segmentDistributed
+                                  , isVal "-" segmentDorsal
                                   ]
 
-isPalatoalveolar = allp [ isNegative segmentLabial
-                        , isPositive segmentCoronal
-                        , isPositive segmentAnterior
-                        , isPositive segmentDistributed
-                        , isPositive segmentDorsal
-                        , isPositive segmentFront
-                        , isNegative segmentBack
+isPalatoalveolar = allp [ isVal "-" segmentLabial
+                        , isVal "+" segmentCoronal
+                        , isVal "+" segmentAnterior
+                        , isVal "+" segmentDistributed
+                        , isVal "+" segmentDorsal
+                        , isVal "+" segmentFront
+                        , isVal "-" segmentBack
                         ]
 
-isRoundedPalatoalveolar = allp [ isPositive segmentLabial
-                               , isPositive segmentRound
-                               , isPositive segmentCoronal
-                               , isPositive segmentAnterior
-                               , isPositive segmentDistributed
-                               , isPositive segmentDorsal
+isRoundedPalatoalveolar = allp [ isVal "+" segmentLabial
+                               , isVal "+" segmentRound
+                               , isVal "+" segmentCoronal
+                               , isVal "+" segmentAnterior
+                               , isVal "+" segmentDistributed
+                               , isVal "+" segmentDorsal
                                ]
 
-isRoundedPalatalizedPalatoalveolar = allp [ isPositive segmentLabial
-                                          , isPositive segmentRound
-                                          , isPositive segmentCoronal
-                                          , isPositive segmentAnterior
-                                          , isPositive segmentDistributed
-                                          , isPositive segmentDorsal
-                                          , isPositive segmentFront
-                                          , isNegative segmentBack
+isRoundedPalatalizedPalatoalveolar = allp [ isVal "+" segmentLabial
+                                          , isVal "+" segmentRound
+                                          , isVal "+" segmentCoronal
+                                          , isVal "+" segmentAnterior
+                                          , isVal "+" segmentDistributed
+                                          , isVal "+" segmentDorsal
+                                          , isVal "+" segmentFront
+                                          , isVal "-" segmentBack
                                           ]
 
-isPalatal = allp [ isNegative segmentLabial
-                 , isPositive segmentCoronal
-                 , isNegative segmentAnterior
-                 , isPositive segmentDistributed
-                 , isPositive segmentDorsal
-                 , isPositive segmentHigh
-                 , isNegative segmentLow
-                 , isPositive segmentFront
-                 , isNegative segmentBack
+isPalatal = allp [ isVal "-" segmentLabial
+                 , isVal "+" segmentCoronal
+                 , isVal "-" segmentAnterior
+                 , isVal "+" segmentDistributed
+                 , isVal "+" segmentDorsal
+                 , isVal "+" segmentHigh
+                 , isVal "-" segmentLow
+                 , isVal "+" segmentFront
+                 , isVal "-" segmentBack
                  ]
             |||
-            allp [ isNegative segmentLabial
-                 , isNegative segmentCoronal
-                 , isPositive segmentDorsal
-                 , isPositive segmentHigh
-                 , isNegative segmentLow
-                 , isPositive segmentFront
-                 , isNegative segmentBack
+            allp [ isVal "-" segmentLabial
+                 , isVal "-" segmentCoronal
+                 , isVal "+" segmentDorsal
+                 , isVal "+" segmentHigh
+                 , isVal "-" segmentLow
+                 , isVal "+" segmentFront
+                 , isVal "-" segmentBack
                  ]
 
-isRoundedPalatal = allp [ isPositive segmentLabial
-                        , isPositive segmentRound
-                        , isPositive segmentCoronal
-                        , isNegative segmentAnterior
-                        , isPositive segmentDistributed
-                        , isPositive segmentDorsal
-                        , isPositive segmentHigh
-                        , isNegative segmentLow
-                        , isPositive segmentFront
-                        , isNegative segmentBack
+isRoundedPalatal = allp [ isVal "+" segmentLabial
+                        , isVal "+" segmentRound
+                        , isVal "+" segmentCoronal
+                        , isVal "-" segmentAnterior
+                        , isVal "+" segmentDistributed
+                        , isVal "+" segmentDorsal
+                        , isVal "+" segmentHigh
+                        , isVal "-" segmentLow
+                        , isVal "+" segmentFront
+                        , isVal "-" segmentBack
                         ]
                    |||
-                   allp [ isPositive segmentLabial
-                        , isPositive segmentRound
-                        , isNegative segmentCoronal
-                        , isPositive segmentDorsal
-                        , isPositive segmentHigh
-                        , isNegative segmentLow
-                        , isPositive segmentFront
-                        , isNegative segmentBack
+                   allp [ isVal "+" segmentLabial
+                        , isVal "+" segmentRound
+                        , isVal "-" segmentCoronal
+                        , isVal "+" segmentDorsal
+                        , isVal "+" segmentHigh
+                        , isVal "-" segmentLow
+                        , isVal "+" segmentFront
+                        , isVal "-" segmentBack
                         ]
 
-isSje = allp [ isNegative segmentLabial
-             , isPositive segmentCoronal
-             , isNegative segmentAnterior
-             , isPositive segmentDistributed
-             , isPositive segmentDorsal
-             , isPositive segmentHigh
-             , isNegative segmentLow
-             , isNegative segmentFront
-             , isPositive segmentBack
+isSje = allp [ isVal "-" segmentLabial
+             , isVal "+" segmentCoronal
+             , isVal "-" segmentAnterior
+             , isVal "+" segmentDistributed
+             , isVal "+" segmentDorsal
+             , isVal "+" segmentHigh
+             , isVal "-" segmentLow
+             , isVal "-" segmentFront
+             , isVal "+" segmentBack
              ]
 
-isVelar = allp [ isNegative segmentLabial
-               , isNegative segmentCoronal
-               , isPositive segmentDorsal
-               , isPositive segmentHigh
-               , isNegative segmentLow
-               , isNegative segmentFront
-               , isNegative segmentBack
-                 ||| isPositive segmentBack
+isVelar = allp [ isVal "-" segmentLabial
+               , isVal "-" segmentCoronal
+               , isVal "+" segmentDorsal
+               , isVal "+" segmentHigh
+               , isVal "-" segmentLow
+               , isVal "-" segmentFront
+               , isVal "-" segmentBack
+                 ||| isVal "+" segmentBack
                ]
 
-isRoundedVelar = allp [ isPositive segmentLabial
-                      , isPositive segmentRound
-                      , isNegative segmentCoronal
-                      , isPositive segmentDorsal
-                      , isPositive segmentHigh
-                      , isNegative segmentLow
-                      , isNegative segmentFront
-                      , isNegative segmentBack -- most rounded velars
-                        ||| isPositive segmentBack -- w and friends
+isRoundedVelar = allp [ isVal "+" segmentLabial
+                      , isVal "+" segmentRound
+                      , isVal "-" segmentCoronal
+                      , isVal "+" segmentDorsal
+                      , isVal "+" segmentHigh
+                      , isVal "-" segmentLow
+                      , isVal "-" segmentFront
+                      , isVal "-" segmentBack -- most rounded velars
+                        ||| isVal "+" segmentBack -- w and friends
                       ]
 
-isLabialAlveolar = allp [ isPositive segmentLabial
-                        , isNegative segmentRound
-                        , isNegative segmentLabiodental
-                        , isPositive segmentCoronal
-                        , isPositive segmentAnterior
-                        , isNegative segmentDistributed
-                        , isPositive segmentDorsal
+isLabialAlveolar = allp [ isVal "+" segmentLabial
+                        , isVal "-" segmentRound
+                        , isVal "-" segmentLabiodental
+                        , isVal "+" segmentCoronal
+                        , isVal "+" segmentAnterior
+                        , isVal "-" segmentDistributed
+                        , isVal "+" segmentDorsal
                         ]
 
-isLabialVelar = allp [ isPositive segmentLabial
-                     , isNegative segmentCoronal
-                     , isPositive segmentDorsal
-                     , isNegative segmentRound
+isLabialVelar = allp [ isVal "+" segmentLabial
+                     , isVal "-" segmentCoronal
+                     , isVal "+" segmentDorsal
+                     , isVal "-" segmentRound
                      ]
 
 isPalatalizedLabialVelar = const False
 
 isRoundedLabialVelar = const False
 
-isUvular = allp [ isNegative segmentLabial
-                , isPositive segmentDorsal
-                , isNegative segmentHigh
-                , isNegative segmentLow
+isUvular = allp [ isVal "-" segmentLabial
+                , isVal "+" segmentDorsal
+                , isVal "-" segmentHigh
+                , isVal "-" segmentLow
                 ]
 
 isPalatalizedUvular = const False
 
-isRoundedUvular = allp [ isPositive segmentLabial
-                       , isPositive segmentRound
-                       , isPositive segmentDorsal
-                       , isNegative segmentHigh
-                       , isNegative segmentLow
+isRoundedUvular = allp [ isVal "+" segmentLabial
+                       , isVal "+" segmentRound
+                       , isVal "+" segmentDorsal
+                       , isVal "-" segmentHigh
+                       , isVal "-" segmentLow
                        ]
 
-isPharyngeal = allp [ isNegative segmentLabial
-                    , isPositive segmentDorsal
-                    , isNegative segmentHigh
-                    , isPositive segmentLow
+isPharyngeal = allp [ isVal "-" segmentLabial
+                    , isVal "+" segmentDorsal
+                    , isVal "-" segmentHigh
+                    , isVal "+" segmentLow
                     ]
 
-isRoundedPharyngeal = allp [ isPositive segmentLabial
-                           , isPositive segmentRound
-                           , isPositive segmentDorsal
-                           , isNegative segmentHigh
-                           , isPositive segmentLow
+isRoundedPharyngeal = allp [ isVal "+" segmentLabial
+                           , isVal "+" segmentRound
+                           , isVal "+" segmentDorsal
+                           , isVal "-" segmentHigh
+                           , isVal "+" segmentLow
                            ]
 
-isEpiglottal = allp [ isNegative segmentLabial
-                    , isPositive segmentEpilaryngealSource
+isEpiglottal = allp [ isVal "-" segmentLabial
+                    , isVal "+" segmentEpilaryngealSource
                     ]
 
-isRoundedEpiglottal = allp [ isPositive segmentLabial
-                           , isPositive segmentRound
-                           , isPositive segmentEpilaryngealSource
+isRoundedEpiglottal = allp [ isVal "+" segmentLabial
+                           , isVal "+" segmentRound
+                           , isVal "+" segmentEpilaryngealSource
                            ]
 
 isGlottal = const False
 
 getPOA :: Segment -> POA
-getPOA seg = case seg of
+getPOA seg =
+  case seg of
+
   -- Labials
   s | isLabial s -> POA Labial Nothing Nothing False
     | isRoundedLabial s -> POA Labial (Just Rounded) Nothing False
     | isPalatalizedLabial s -> POA Labial Nothing (Just Palatalized) False
     | isRhotacizedLabial s -> POA Labial Nothing Nothing True
+
   -- Labiodentals
     | isLabiodental s -> POA Labiodental Nothing Nothing False
     | isPalatalizedLabiodental s -> POA Labiodental Nothing (Just Palatalized) False
     | isRoundedLabiodental s -> POA Labiodental (Just Rounded) Nothing False
+
   -- Linguolabials
     | isLinguolabial s -> POA Linguolabial Nothing Nothing False
+
   -- Dentals
     | isDental s -> POA Dental Nothing Nothing False
     | isRoundedDental s -> POA Dental (Just Rounded) Nothing False
     | isVelarizedDental s -> POA Dental Nothing (Just Velarized) False
+
   -- Alveolars
     | isAlveolar s -> POA Alveolar Nothing Nothing False
     | isRoundedAlveolar s -> POA Alveolar (Just Rounded) Nothing False
     | isPalatalizedAlveolar s -> POA Alveolar Nothing (Just Palatalized) False
     | isRoundedPalatalizedAlveolar s -> POA Alveolar (Just Rounded) (Just Palatalized) False
     | isVelarizedAlveolar s -> POA Alveolar Nothing (Just Velarized) False
+
   -- Retroflexes
-    | isRetroflex s -> POA Retroflex Nothing Nothing False
-    | isRoundedRetroflex s -> POA Retroflex (Just Rounded) Nothing False
-    | isPalatalizedRetroflex s -> POA Retroflex Nothing (Just Palatalized) False
+    | isRetroflex s -> POA Alveolar Nothing Nothing True
+    | isRoundedRetroflex s -> POA Alveolar (Just Rounded) Nothing True
+    | isPalatalizedRetroflex s -> POA Alveolar Nothing (Just Palatalized) True
+
   -- Alveolopalatals
     | isAlveolopalatal s -> POA Alveolopalatal Nothing Nothing False
     | isRoundedAlveolopalatal s -> POA Alveolopalatal (Just Rounded) Nothing False
     | isPalatalizedAlveolopalatal s -> POA Alveolopalatal Nothing (Just Palatalized) False
     | isVelarizedAlveolopalatal s -> POA Alveolopalatal Nothing (Just Velarized) False
     | isCompressedAlveolopalatal s -> POA Alveolopalatal (Just Compressed) Nothing False
+
   -- Palatoalveolars
     | isPalatoalveolar s -> POA Palatoalveolar Nothing Nothing False
     | isRoundedPalatoalveolar s -> POA Palatoalveolar (Just Rounded) Nothing False
     | isRoundedPalatalizedPalatoalveolar s -> POA Palatoalveolar (Just Rounded) (Just Palatalized) False
+
   -- Palatals
     | isPalatal s -> POA Palatal Nothing Nothing False
     | isRoundedPalatal s -> POA Palatal (Just Rounded) Nothing False
+
   -- Sje
     | isSje s -> POA Sje Nothing Nothing False
+
   -- Velars
     | isVelar s -> POA Velar Nothing Nothing False
     | isRoundedVelar s -> POA Velar (Just Rounded) Nothing False
+
   -- Labial-Alveolars and Labial-Velars
     | isLabialAlveolar s -> POA LabialAlveolar Nothing Nothing False
     | isLabialVelar s -> POA LabialVelar Nothing Nothing False
     | isRoundedLabialVelar s -> POA LabialVelar (Just Rounded) Nothing False
     | isPalatalizedLabialVelar s -> POA LabialVelar Nothing (Just Palatalized) False
+
   -- Uvulars
     | isUvular s -> POA Uvular Nothing Nothing False
     | isRoundedUvular s -> POA Uvular (Just Rounded) Nothing False
     | isPalatalizedUvular s -> POA Uvular Nothing (Just Palatalized) False
+
   -- Pharyngeals
     | isPharyngeal s -> POA Pharyngeal Nothing Nothing False
     | isRoundedPharyngeal s -> POA Pharyngeal (Just Rounded) Nothing False
+
   -- Epiglottals
     | isEpiglottal s -> POA Epiglottal Nothing Nothing False
     | isRoundedEpiglottal s -> POA Epiglottal (Just Rounded) Nothing False
+
   -- Glottals
     | isGlottal s -> POA Glottal Nothing Nothing False
+
   _ -> POA Unknown Nothing Nothing False

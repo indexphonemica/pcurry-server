@@ -4,7 +4,8 @@ module Features
 
 where
 
-import           Data.Text (Text)
+import           Data.Maybe (isNothing)
+import           Data.Text  (Text)
 import           Schema
 
 
@@ -20,14 +21,14 @@ data Feature = Feature
 isVal :: Text -> (Segment -> Maybe Text) -> Segment -> Bool
 isVal t f s = maybe False (t ==) (f s)
 
+isNull :: (Segment -> Maybe Text) -> Segment -> Bool
+isNull f s = isNothing $ f s
+
 isPositive :: (Segment -> Maybe Text) -> Segment -> Bool
 isPositive = isVal "+"
 
 isNegative :: (Segment -> Maybe Text) -> Segment -> Bool
 isNegative = isVal "-"
-
-isNull :: (Segment -> Maybe Text) -> Segment -> Bool
-isNull = isVal "0"
 
 -- | Applies a lifted function to a normal value and returns a lifted result.
 apF :: Functor f => f (a -> b) -> a -> f b
